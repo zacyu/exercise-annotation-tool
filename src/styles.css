@@ -1,0 +1,18 @@
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+@import "~roboto-fontface/css/roboto/roboto-fontface.css";
+
+body {
+  color: #fff;
+  background-color: #212121;
+  font-family: Roboto;
+  margin: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+/** Fix for FireFox **/
+.mat-menu-content {
+  overflow: hidden;
+}

@@ -1,0 +1,146 @@
+<div id="container" tabindex="0" (keydown)="onKeyDown($event)">
+  <mat-card id="control-panel">
+    <mat-card-title>Control Panel</mat-card-title>
+    <mat-card-subtitle>Version {{version}}</mat-card-subtitle>
+    <mat-card-content>
+      <div>
+        <button (click)="loadVideo()" mat-button mat-raised-button color="primary">
+          {{isVideoLoaded ? 'Load New Video' : 'Load Video'}}
+        </button>
+      </div>
+      <div *ngIf="isVideoReady">
+        <button (click)="loadAnnotation()" mat-button mat-raised-button color="accent">
+          {{isAnnotationLoaded ? 'Load New Annotation File' : 'Load Annotation File'}}
+        </button>
+        <button (click)="newAnnotation()" mat-button mat-raised-button color="accent">
+          New Annotation
+        </button>
+        <button (click)="saveAnnotation()" *ngIf="isAnnotationLoaded" mat-button mat-raised-button color="accent" [disabled]="!isAnnotationModified">
+          {{isAnnotationModified ? 'Save Annotation File' : 'Annotation File Saved'}}
+        </button>
+        <button mat-button id="time-display" (click)="isShowingFrameNum = !isShowingFrameNum" matTooltip="Click to switch to {{isShowingFrameNum ? 'time' : 'frame number'}}">
+          <h2>{{formatTime(currTime, duration, isShowingFrameNum)}}</h2>
+          <mat-icon *ngIf="isAnnotationLoaded" id="annotation-indicator">
+            {{isAnnotationModified ? 'attach_file*' : 'attach_file'}}
+          </mat-icon>
+        </button>
+        <div id="playback-control">
+          <button mat-button mat-icon-button mat-raised-button color="accent" (click)="playPause()">
+            <mat-icon>{{isPlaying && (highlightedBlockKey == null) ? 'pause' : 'play_arrow'}}</mat-icon>
+          </button>
+          <mat-slider min="0" [max]="duration" step="1" [value]="currTime" (input)="seek($event.value)"></mat-slider>
+        </div>
+        <button mat-button mat-icon-button color="primary" (click)="video.nativeElement.muted = !video.nativeElement.muted" matTooltip="{{video.nativeElement.muted ? 'Unmute' : 'Mute'}}">
+          <mat-icon>
+            {{video.nativeElement.muted ? 'volume_up' : 'volume_off'}}
+          </mat-icon>
+        </button>
+        <button mat-button mat-icon-button color="primary" (click)="changePlaybackSpeed()" matTooltip="{{video.nativeElement.playbackRate}}x">
+          <mat-icon>fast_forward</mat-icon>
+        </button>
+      </div>
+      <div *ngIf="isAnnotationLoaded">
+        <mat-nav-list>
+          <h3 mat-subheader>Annotation Blocks ({{classifiedBlockCount()}}/{{allBlocks.length}} classified)</h3>
+          <div id="subject-block-list">
+            <ng-template ngFor let-block [ngForOf]="this.allBlocks" let-i="index">
+              <mat-list-item [ngClass]="{'highlighted': i == highlightedBlockKey}" (click)="highlightBlock(i)">
+                <mat-icon mat-list-icon>fitness_center</mat-icon>
+                <h4 mat-line>[{{block.enterFrame}}, {{block.exitFrame - 1}}] {{block.name}} {{block.type ? '- ' + block.type : '(not classified)'}}</h4>
+              </mat-list-item>
+            </ng-template>
+          </div>
+          <mat-form-field id="subject-exercise-type-form" *ngIf="highlightedBlockKey != null">
+            <input type="text" (change)="saveExerciseTypes()" (input)="exerciseTypeUpdate()" [(ngModel)]="exerciseType" placeholder="Exercise Type" matInput [matAutocomplete]="auto">
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="exerciseTypeUpdate()">
+              <mat-option *ngFor="let option of exerciseOptions" [value]="option">
+                {{option}}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </mat-nav-list>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <div #videoArea id="video-area" (window:resize)="updateAnnotationStyle()">
+    <mat-card id="no-video-notice" *ngIf="!isVideoLoaded">
+      <mat-icon>info_outline</mat-icon>
+      <span>Please load a video from the Control Panel.</span>
+    </mat-card>
+    <div id="video-player" *ngIf="isVideoLoaded">
+      <video #video [src]="safeVideoUrl" (durationchange)="updateDuration()" (ended)="currTime = duration; isPlaying = false" (pause)="updateTime(); isPlaying = false" (loadeddata)="updateVideoMetadata()" (playing)="isPlaying = true" (timeupdate)="updateTime()"></video>
+      <div id="annotation-container" *ngIf="isAnnotationLoaded" [ngStyle]="annotationContainerStyle" (mousedown)="startDrawingBlock($event)" (mousemove)="moveDrawingBlock($event)" (mouseleave)="abortDrawingBlock($event)" (mouseup)="endDrawingBlock($event)">
+        <ng-template ngFor let-block [ngForOf]="blocks">
+          <div [ngClass]="{'subject-block': true, 'no-pe': isDrawingBlock, 'highlighted': block.key == highlightedBlockKey}" [ngStyle]="block.style" [matTooltip]="block.name" [matMenuTriggerFor]="blockMenu" (click)="editBlock(block.key)">
+          </div>
+        </ng-template>
+        <mat-menu #blockMenu="matMenu">
+          <button (click)="changeSubjectName()" mat-menu-item>
+            <mat-icon>edit</mat-icon>
+            <span>Rename</span>
+          </button>
+          <button mat-menu-item [matMenuTriggerFor]="durationMenu">
+            <mat-icon>av_timer</mat-icon>
+            <span>Endpoints</span>
+          </button>
+          <button mat-menu-item [matMenuTriggerFor]="annotationMenu">
+            <mat-icon>comment</mat-icon>
+            <span>Text Annotation</span>
+          </button>
+          <button (click)="deleteBlock()" mat-menu-item>
+            <mat-icon>delete_forever</mat-icon>
+            <span>Delete</span>
+          </button>
+        </mat-menu>
+        <mat-menu #durationMenu="matMenu">
+          <button mat-menu-item [matMenuTriggerFor]="startMenu">Start</button>
+          <button mat-menu-item [matMenuTriggerFor]="endMenu">End</button>
+        </mat-menu>
+        <mat-menu #startMenu="matMenu">
+          <button (click)="setStartFrame(0)" mat-menu-item>
+            <mat-icon>skip_previous</mat-icon>
+            <span>Set to the first frame</span>
+          </button>
+          <button (click)="setStartFrame(currTime)" mat-menu-item>
+            <mat-icon>content_cut</mat-icon>
+            <span>Set to current frame</span>
+          </button>
+          <button (click)="seekSubjectStart()" mat-menu-item>
+            <mat-icon>play_arrow</mat-icon>
+            <span>Go to</span>
+          </button>
+        </mat-menu>
+        <mat-menu #endMenu="matMenu">
+          <button (click)="setEndFrame(duration)" mat-menu-item>
+            <mat-icon>skip_next</mat-icon>
+            <span>Set to the last frame</span>
+          </button>
+          <button (click)="setEndFrame(currTime)" mat-menu-item>
+            <mat-icon>content_cut</mat-icon>
+            <span>Set to current frame</span>
+          </button>
+          <button (click)="seekSubjectEnd()" mat-menu-item>
+            <mat-icon>play_arrow</mat-icon>
+            <span>Go to</span>
+          </button>
+        </mat-menu>
+        <mat-menu #annotationMenu="matMenu">
+          <button (click)="addTextAnnotation()" mat-menu-item>Add new</button>
+          <button mat-menu-item [matMenuTriggerFor]="annotationView">
+            View all
+          </button>
+        </mat-menu>
+        <mat-menu #annotationView="matMenu">
+          <ng-template ngFor let-blockEvent [ngForOf]="this.subjectEvents" let-i="index">
+            <button (click)="editTextAnnotation(i)" *ngIf="blockEvent && blockEvent.data" mat-menu-item>
+              #{{blockEvent.frameNum}}: {{blockEvent.data}}
+            </button>
+          </ng-template>
+        </mat-menu>
+        <div id="drawing-block" class="subject-block no-pe" [ngStyle]="getDrawingBlockStyle()" *ngIf="isDrawingBlock || isSavingBlock"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<input accept="video/mp4, video/quicktime, video/webm" id="video-loader" (change)="videoUpdate()" type="file" #videoLoader />
+<input accept="application/json" id="annotation-loader" (change)="annotationUpdate(false)" type="file" #annotationLoader />

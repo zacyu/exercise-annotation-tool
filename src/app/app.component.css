@@ -1,0 +1,15 @@
+div {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+tagging-tool {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+mat-toolbar {
+  z-index: 10;
+}

@@ -1,0 +1,116 @@
+button:not([mat-icon-button]) {
+  margin: 4px 2px;
+  width: 100%;
+}
+
+mat-toolbar {
+  z-index: 10;
+}
+
+video, #video-player {
+  width: 100%;
+  height: 100%;
+}
+
+.subject-block {
+  background: rgba(255, 243, 224, 0.25);
+  border: solid 2px #FF9800;
+  border-radius: 2px;
+  cursor: pointer;
+  position: absolute;
+}
+
+.subject-block.highlighted {
+  background: rgba(252, 228, 236, 0.25);
+  border: solid 4px #E91E63;
+}
+
+.subject-block.no-pe {
+  pointer-events: none;
+}
+
+#annotation-container {
+  cursor: crosshair;
+  position: absolute;
+}
+
+#annotation-indicator {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+}
+
+#annotation-loader {
+  display: none;
+}
+
+#container {
+  display: flex;
+  flex-flow: row;
+  height: 100%;
+  width: 100%;
+}
+
+#control-panel .mat-card-content {
+  width: 300px;
+}
+
+#drawing-block {
+  background: rgba(252, 228, 236, 0.25);
+  border: solid 2px #E91E63;
+}
+
+#no-video-notice {
+  width: 50%;
+  margin: auto;
+}
+
+#no-video-notice * {
+  vertical-align: middle;
+}
+
+#playback-control {
+  position: relative;
+}
+
+#playback-control mat-slider {
+  width: calc(100% - 50px);
+  margin: 0 3px;
+}
+
+#subject-block-list {
+  height: 240px;
+  overflow: auto;
+}
+
+#subject-block-list .mat-list-item {
+  height: 48px;
+}
+
+#subject-block-list .mat-list-item.highlighted {
+  background-color: rgba(252, 228, 236, 1);
+}
+
+#subject-block-list .mat-list-item p {
+  color: rgba(0,0,0,.38);
+}
+
+#subject-exercise-type-form {
+  width: 100%;
+}
+
+#time-display {
+  text-align: center;
+}
+
+#video-area {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: calc(100% - 200px);
+}
+
+#video-loader {
+  display: none;
+}
