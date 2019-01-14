@@ -45,13 +45,13 @@
           <div id="subject-block-list">
             <ng-template ngFor let-block [ngForOf]="this.allBlocks" let-i="index">
               <mat-list-item [ngClass]="{'highlighted': i == highlightedBlockKey}" (click)="highlightBlock(i)">
-                <mat-icon mat-list-icon>fitness_center</mat-icon>
+                <mat-icon mat-list-icon>loupe</mat-icon>
                 <h4 mat-line>[{{block.enterFrame}}, {{block.exitFrame - 1}}] {{block.name}} {{block.type ? '- ' + block.type : '(not classified)'}}</h4>
               </mat-list-item>
             </ng-template>
           </div>
           <mat-form-field id="subject-exercise-type-form" *ngIf="highlightedBlockKey != null">
-            <input type="text" (change)="saveExerciseTypes()" (input)="exerciseTypeUpdate()" [(ngModel)]="exerciseType" placeholder="Exercise Type" matInput [matAutocomplete]="auto">
+            <input type="text" (change)="saveExerciseTypes()" (input)="exerciseTypeUpdate()" [(ngModel)]="exerciseType" placeholder="Block Type" matInput [matAutocomplete]="auto">
             <mat-autocomplete #auto="matAutocomplete" (optionSelected)="exerciseTypeUpdate()">
               <mat-option *ngFor="let option of exerciseOptions" [value]="option">
                 {{option}}
